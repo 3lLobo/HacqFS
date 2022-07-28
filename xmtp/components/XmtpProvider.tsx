@@ -49,7 +49,6 @@ export const XmtpProvider: React.FC = ({ children }) => {
   useEffect(() => {
     const initClient = async () => {
       if (!wallet) return
-      console.log('initClient:', initClient)
       setClient(await Client.create(wallet, { env: getEnv() }))
     }
     initClient()
@@ -58,7 +57,6 @@ export const XmtpProvider: React.FC = ({ children }) => {
   useEffect(() => {
     const listConversations = async () => {
       if (!client) return
-      console.log('Listing conversations')
       setLoadingConversations(true)
       const convos = await client.conversations.list()
       convos.forEach((convo: Conversation) => {

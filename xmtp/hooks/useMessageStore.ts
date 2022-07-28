@@ -19,8 +19,6 @@ const useMessageStore = () => {
       if (!newMessages.length) {
         return state
       }
-      console.log('Dispatching new messages for peer address', peerAddress)
-
       return {
         ...state,
         [peerAddress]: existing.concat(newMessages),

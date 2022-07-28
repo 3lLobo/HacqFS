@@ -13,7 +13,6 @@ const shortAddress = (addr: string): string =>
 
 const Address = ({ address, className }: AddressProps): JSX.Element => {
   const { name, loading } = useEns(address)
-  console.log('address:', address)
 
   return (
     <span

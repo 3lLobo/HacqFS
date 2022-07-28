@@ -26,6 +26,54 @@ const isOnSameDay = (d1?: Date, d2?: Date): boolean => {
 const formatDate = (d?: Date) =>
   d?.toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
+const MessageFiltered = ({message}) => {
+  const messageObject = checkMessageType(message)
+  switch (messageObject.type) {
+    case "text":
+      return <div>{message.content}</div>
+    case "file":
+      return (
+        <div>
+          This is a File with subject {messageObject.description.toUpperCase()}. 
+          You can check it on FileTransfer tab or 
+          <a 
+            target="_blank"
+            rel="noreferrer"
+            href={`https://ipfs.io/ipfs/${messageObject.cid}`}
+          >
+            HERE
+          </a>.
+        </div>
+      )
+    case "media":
+      return (
+      <div>
+        <img 
+          src={`https://ipfs.io/ipfs/${messageObject.cid}/media.${messageObject.extension}`} 
+          className='h-96'
+        />
+        <div>{messageObject.message}</div>
+      </div>
+      )
+    default:
+      return <div>Error</div>
+  }
+}
+
+const checkMessageType = (message) => {
+  //Instead of slicing we can directly parse and check but
+  //I think this is faster
+  const sliced = message.content.slice(0,22)
+  switch (sliced) {
+    case '{"type":"media","cid":':
+      return (JSON.parse(message.content))
+    case '{"type":"file","cid":"':
+      return (JSON.parse(message.content))
+    default:
+      return ({type: 'text'})
+      break;
+  }
+}
 const MessageTile = ({ message, isSender }: MessageTileProps): JSX.Element => {
   const savedAvatar = useAddressAvatar({
     address: message.senderAddress.toLowerCase(),
@@ -49,8 +97,10 @@ const MessageTile = ({ message, isSender }: MessageTileProps): JSX.Element => {
         <span className="block text-md px-2 mt-2 text-black font-normal">
           {message.error ? (
             `Error: ${message.error?.message}`
+          // ) : (message.content.slice(0,23)==='{"type":"media","cid":"' ? (
+          //   <img className='h-64' src='https://ipfs.io/ipfs/bafybeihjesi6ustbin3to5cqxkpzd3opqihwyq74ef2fc37fm4rtnkgsnu/bart.jpg' />
           ) : (
-            <Emoji text={message.content || ''} />
+            <MessageFiltered message={message}/>
             // <div>{message.content}</div>
           )}
         </span>

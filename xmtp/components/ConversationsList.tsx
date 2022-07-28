@@ -1,6 +1,5 @@
 import classNames from '../helpers/classNames'
 import { truncate, formatDate } from '../helpers/string'
-import Link from 'next/link'
 import Address from './Address'
 import { useRouter } from 'next/router'
 import { Conversation } from '@xmtp/xmtp-js/dist/types/src/conversations'
@@ -25,6 +24,21 @@ type ConversationTileProps = {
 
 const getLatestMessage = (messages: Message[]): Message | null =>
   messages.length ? messages[messages.length - 1] : null
+
+  const checkMessageType = (message) => {
+    //Instead of slicing we can directly parse and check but
+    //I think this is faster
+    const sliced = message.content.slice(0,22)
+    switch (sliced) {
+      case '{"type":"media","cid":':
+        return (JSON.parse(message.content))
+      case '{"type":"file","cid":"':
+        return (JSON.parse(message.content))
+      default:
+        return ({type: 'text'})
+        break;
+    }
+  }
 
 const ConversationTile = ({
   conversation,
@@ -58,7 +72,6 @@ const ConversationTile = ({
     return null
   }
   return (
-    // <Link href={path} key={conversation.peerAddress}>
     <div onClick={handleClick} className="cursor-pointer">
       <a onClick={onClick}>
         <div
@@ -66,19 +79,19 @@ const ConversationTile = ({
             'h-20',
             'py-2',
             'px-4',
+            'mt-1',
             'md:max-w-sm',
             'mx-auto',
             'bg-snow',
             'rounded-xl',
-            'space-y-2',
-            'py-2',
             'flex',
             'items-center',
-            'space-y-0',
+            // 'space-y-0',
+            // 'space-y-2',
             'space-x-4',
-            'border-b-2',
-            'border-gray-100',
-            'hover:bg-bt-100',
+            // 'border-b-2',
+            // 'border-gray-100',
+            // 'hover:bg-bt-100',
             loading ? 'opacity-80' : 'opacity-100',
             isSelected ? 'bg-bt-200' : null
           )}
@@ -87,8 +100,8 @@ const ConversationTile = ({
           <div className="relative w-11 h-11 ">
             <Avatar src={savedAvatar} scale={0} />
           </div>
-          <div className="py-4 sm:text-left ml-3 text w-full">
-            <div className="grid-cols-2 grid">
+          <div className="py-4 sm:text-left ml-3 text min-w-96 w-full">
+            <div className="flex justify-between px-2">
               {nickname.length < 41 ? (
                 <div className="text-black text-lg md:text-md font-bold place-self-start">
                   {nickname}
@@ -111,18 +124,24 @@ const ConversationTile = ({
             </div>
             <p
               className={classNames(
-                'text-[13px] md:text-sm font-normal text-ellipsis mt-0',
+                'text-[13px] md:text-sm font-normal text-ellipsis mt-0 px-2',
                 isSelected ? 'text-n-500' : 'text-n-300',
                 loading ? 'animate-pulse' : ''
               )}
             >
-              {latestMessage && truncate(latestMessage.content, 75)}
+              {
+                checkMessageType(latestMessage).type === "text" ? 
+                  (
+                    truncate(latestMessage.content, 75)
+                  ) : (
+                    "This message has an attached content."
+                  )
+              }
             </p>
           </div>
         </div>
       </a>
     </div>
-    // </Link>
   )
 }
 
@@ -148,7 +167,7 @@ const ConversationsList = ({
       {conversations &&
         conversations.sort(orderByLatestMessage).map((convo) => {
           const isSelected =
-            router.query.recipientWalletAddr == convo.peerAddress
+            router.query.to == convo.peerAddress
           return (
             <ConversationTile
               key={convo.peerAddress}
